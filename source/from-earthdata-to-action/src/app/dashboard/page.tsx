@@ -8,6 +8,21 @@ const Map = dynamic(() => import("../map"), {
   ssr: false,
 });
 
+// const airQualityPhases() = {
+//   good: [
+//     `The air quality in ${area} is excellent and refreshing today.`,
+//     `Residents in ${area} are enjoying crisp, clean air with low pollution levels.`,
+//     `${area} boasts some of the cleanest air in the region this season.`,
+//     `Breathing is easy in ${area} thanks to outstanding air quality conditions.`,
+//   ],
+//   bad: [
+//     `The air quality in ${area} has reached unhealthy levels today.`,
+//     `Residents in ${area} should limit outdoor activities due to poor air conditions.`,
+//     `${area} is experiencing significantly polluted air with high particulate matter.`,
+//     `Air quality warnings have been issued for ${area} as pollution levels soar.`,
+//   ],
+// };
+
 export default function Dashboard() {
   const state = useGeolocation();
   const [position, setPosition] = useState<[number, number]>([51.505, -0.09]);
@@ -64,6 +79,17 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto px-[15%] py-6">
+      {loading && <p>Loading... (Please enable permissions)</p>}
+      {maperror && <p>Failed to get your location</p>}
+      {!loading && !maperror && (
+        <Map
+          position={position}
+          zoom={zoom}
+          heatMapData={filteredpoints}
+          showHeatmap={showAirHeatmap}
+        />
+      )}
+
       <div className="py-4 justify-center flex">
         <input
           type="range"
@@ -75,7 +101,7 @@ export default function Dashboard() {
           className="range range-primary dark:range-neutral transition-colors duration-700"
         />
       </div>
-      <div className="inline-flex gap-4 mb-4">
+      <div className="inline-flex gap-4 mb-4 justify-center w-full">
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -93,16 +119,6 @@ export default function Dashboard() {
           Show Population Density
         </label>
       </div>
-      {loading && <p>Loading... (Please enable permissions)</p>}
-      {maperror && <p>Failed to get your location</p>}
-      {!loading && !maperror && (
-        <Map
-          position={position}
-          zoom={zoom}
-          heatMapData={filteredpoints}
-          showHeatmap={showAirHeatmap}
-        />
-      )}
     </div>
   );
 }
