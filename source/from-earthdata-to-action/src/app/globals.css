@@ -24,3 +24,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.elrian-font {
+  font-family: Title-Font, sans-serif;
+}
+
+@font-face {
+  font-family: Title-Font;
+  src: url("../../public/font/NotJamOldStyle14.ttf") format("truetype");
+}
