@@ -77,13 +77,7 @@ function StartView({
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function Map(props: any) {
-  const { position, zoom } = props;
-
-  const exampleHeatPoints: [number, number, number][] = [
-    [51.505, -0.09, 0.8],
-    [51.51, -0.1, 0.5],
-    [51.52, -0.12, 0.7],
-  ];
+  const { position, zoom, showHeatmap, heatMapData } = props;
 
   return (
     <div className="h-[500px] w-full">
@@ -100,7 +94,7 @@ export default function Map(props: any) {
         />
         <Marker position={position}></Marker>
         <StartView position={position} zoom={zoom} />
-        <HeatLayer addressPoints={exampleHeatPoints} />
+        {showHeatmap && <HeatLayer addressPoints={heatMapData} />}
       </MapContainer>
     </div>
   );

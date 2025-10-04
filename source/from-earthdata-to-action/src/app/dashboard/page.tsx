@@ -14,7 +14,18 @@ export default function Dashboard() {
   const [zoom] = useState<number>(13);
   const [loading, setLoading] = useState<boolean>(true);
   const [maperror, setMapError] = useState<boolean>(false);
-  const [sliderValue, setSliderValue] = useState(0);
+  const [filteredpoints, setFilteredPoints] = useState<
+    [number, number, number, Date][]
+  >([]);
+  const [showAirHeatmap, setShowAirHeatmap] = useState<boolean>(false);
+  const [showPopHeatmap, setShowPopHeatmap] = useState<boolean>(false);
+  const [sliderValue, setSliderValue] = useState(6);
+
+  const exampleHeatPoints: [number, number, number, Date][] = [
+    [51.505, -0, 0.8, new Date("2025-01-01")],
+    [51.51, -0.15, 0.5, new Date("2025-06-01")],
+    [51.52, -0.2, 0.7, new Date("2025-12-01")],
+  ];
 
   useEffect(() => {
     if (state.loading) {
@@ -32,21 +43,66 @@ export default function Dashboard() {
     }
   }, [state]);
 
+  useEffect(() => {
+    const selectedDate = new Date(2025, sliderValue, 1);
+
+    // Calculate date range: 2 months before and after
+    const twoMonthsBefore = new Date(selectedDate);
+    twoMonthsBefore.setMonth(selectedDate.getMonth() - 2);
+
+    const twoMonthsAfter = new Date(selectedDate);
+    twoMonthsAfter.setMonth(selectedDate.getMonth() + 2);
+
+    const filteredPoints = exampleHeatPoints.filter((point) => {
+      // Assuming point[3] is a Date object or timestamp
+      const pointDate = new Date(point[3]);
+      return pointDate >= twoMonthsBefore && pointDate <= twoMonthsAfter;
+    });
+
+    setFilteredPoints(filteredPoints);
+  }, [sliderValue]);
+
   return (
     <div className="container mx-auto px-[15%] py-6">
       <div className="py-4 justify-center flex">
         <input
           type="range"
           min={0}
-          max="100"
+          max={11}
           value={sliderValue}
+          step="1"
           onChange={(e) => setSliderValue(Number(e.target.value))}
           className="range range-primary dark:range-neutral transition-colors duration-700"
         />
       </div>
+      <div className="inline-flex gap-4 mb-4">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={showAirHeatmap}
+            onChange={() => setShowAirHeatmap((v) => !v)}
+          />
+          Show Air Quality
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={showPopHeatmap}
+            onChange={() => setShowPopHeatmap((v) => !v)}
+          />
+          Show Population Density
+        </label>
+      </div>
       {loading && <p>Loading... (Please enable permissions)</p>}
       {maperror && <p>Failed to get your location</p>}
-      {!loading && !maperror && <Map position={position} zoom={zoom} />}
+      {!loading && !maperror && (
+        <Map
+          position={position}
+          zoom={zoom}
+          heatMapData={filteredpoints}
+          showHeatmap={showAirHeatmap}
+        />
+      )}
     </div>
   );
 }

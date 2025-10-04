@@ -13,7 +13,7 @@ export default function Navbar() {
           <Link
             key={item}
             href={`/${item.toLowerCase()}`}
-            className="text-3xl mx-2 text-black hover:text-gray-300 transition-colors duration-200 font-mono"
+            className="text-3xl mx-2 text-black hover:text-gray-300 transition-colors duration-200 dark:text-white dark:hover:text-black dark:transition-colors duration-700 font-mono"
           >
             {item}
           </Link>
