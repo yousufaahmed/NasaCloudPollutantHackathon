@@ -6,6 +6,7 @@
     "fastapi-dev": "pip3 install -r requirements.txt && python3 -m uvicorn api.index:app --reload",
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
+    "build:azure": "next build --turbopack",
     "start": "next start",
     "lint": "eslint"
   },

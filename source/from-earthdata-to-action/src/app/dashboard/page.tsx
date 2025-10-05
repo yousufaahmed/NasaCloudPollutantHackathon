@@ -111,7 +111,7 @@ export default function Dashboard() {
           className="range range-primary dark:range-neutral transition-colors duration-700"
         />
       </div>
-      <div className="inline-flex gap-4 mb-4 justify-center w-full">
+      <div className="inline-flex gap-4 mb-4 justify-center w-full font-mono">
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
