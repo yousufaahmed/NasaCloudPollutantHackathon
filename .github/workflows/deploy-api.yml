@@ -1,0 +1,38 @@
+name: Deploy Python API to Azure Container Apps
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'api/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Build and push Docker image
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      
+      - run: |
+          docker build -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/fastapi-backend:${{ github.sha }} ./api
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/fastapi-backend:${{ github.sha }}
+      
+      - name: Deploy to Azure Container Apps
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          containerAppName: your-api-name
+          resourceGroup: your-resource-group
+          imageToDeploy: ${{ secrets.REGISTRY_LOGIN_SERVER }}/fastapi-backend:${{ github.sha }}
