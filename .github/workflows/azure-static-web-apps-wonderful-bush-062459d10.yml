@@ -25,6 +25,8 @@ jobs:
       
       - name: Install and Build
         working-directory: source/from-earthdata-to-action
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
         run: |
           npm ci
           npm run build
@@ -37,7 +39,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "source/from-earthdata-to-action"
-          api_location: "api"
+          api_location: ""
           output_location: "out"
           skip_app_build: true
           
