@@ -24,6 +24,14 @@ const Map = dynamic(() => import("../map"), {
 //   ],
 // };
 
+const LoadingState = () => (
+  <p className="text-center text-black dark:text-amber-600">
+    Loading... (Please enable permissions)
+  </p>
+);
+
+const MapErrorState = () => <p>Failed to get your location</p>;
+
 export default function Dashboard() {
   const state = useGeolocation();
   const [position, setPosition] = useState<[number, number]>([51.505, -0.09]);
@@ -78,38 +86,40 @@ export default function Dashboard() {
     setFilteredPoints(filteredPoints);
   }, [sliderValue]);
 
+  const renderContent = () => {
+    if (loading) return <LoadingState />;
+    if (maperror) return <MapErrorState />;
+    return (
+      <div className="flex flex-col gap-6 lg:flex-row-reverse">
+        <div className=" ">
+          <WeatherWidget latitude={position[0]} longitude={position[1]} />
+        </div>
+        <Map
+          position={position}
+          zoom={zoom}
+          heatMapData={filteredpoints}
+          showHeatmap={showAirHeatmap}
+        />
+      </div>
+    );
+  };
+
   return (
     <div className="container mx-auto px-[15%] py-6">
-      {loading && (
-        <p className="text-center text-black dark:text-amber-600">
-          Loading... (Please enable permissions)
-        </p>
-      )}
-      {maperror && <p>Failed to get your location</p>}
-      {!loading && !maperror && (
-        <div className="flex flex-col gap-6 lg:flex-row-reverse">
-          <div className=" ">
-            <WeatherWidget latitude={position[0]} longitude={position[1]} />
-          </div>
-          <Map
-            position={position}
-            zoom={zoom}
-            heatMapData={filteredpoints}
-            showHeatmap={showAirHeatmap}
-          />
-        </div>
-      )}
-
+      {renderContent()}
       <div className="py-4 justify-center flex">
-        <input
-          type="range"
-          min={0}
-          max={11}
-          value={sliderValue}
-          step="1"
-          onChange={(e) => setSliderValue(Number(e.target.value))}
-          className="range range-primary dark:range-neutral transition-colors duration-700"
-        />
+        <label className="flex items-center gap-4 font-mono">
+          <input
+            type="range"
+            min={0}
+            max={11}
+            value={sliderValue}
+            step="1"
+            onChange={(e) => setSliderValue(Number(e.target.value))}
+            className="range range-primary dark:range-neutral transition-colors duration-700"
+          />
+          See the past and predicted air quality data
+        </label>
       </div>
       <div className="inline-flex gap-4 mb-4 justify-center w-full font-mono">
         <label className="flex items-center gap-2">
