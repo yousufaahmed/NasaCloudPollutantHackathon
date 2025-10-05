@@ -42,7 +42,6 @@ export default function Dashboard() {
     [number, number, number, Date][]
   >([]);
   const [showAirHeatmap, setShowAirHeatmap] = useState<boolean>(false);
-  const [showPopHeatmap, setShowPopHeatmap] = useState<boolean>(false);
   const [sliderValue, setSliderValue] = useState(6);
 
   const exampleHeatPoints: [number, number, number, Date][] = [
@@ -66,6 +65,8 @@ export default function Dashboard() {
       setLoading(false);
     }
   }, [state]);
+
+  useEffect(() => {}, []);
 
   useEffect(() => {
     const selectedDate = new Date(2025, sliderValue, 1);

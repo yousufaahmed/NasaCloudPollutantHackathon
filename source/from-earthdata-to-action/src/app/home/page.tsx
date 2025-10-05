@@ -1,6 +1,9 @@
+"use client";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
-export default async function Home() {
+export default function Home() {
+  const router = useRouter();
   return (
     <div className="flex flex-col items-center justify-center max-w-3xl mx-auto py-8 px-4 font-mono">
       <div className="flex flex-col gap-6 text-black dark:text-white transition-colors duration-700">
@@ -23,7 +26,7 @@ export default async function Home() {
             alt="Group photo of the team"
             className="rounded-lg flex-shrink-0"
           />
-          <p className="px-4">
+          <p className="px-4 text-black dark:text-white transition-colors duration-700">
             This is our team, consisting of a bunch of students from the
             University of the Exeter. We worked really hard on this throughout
             the night and we hope you appreciate our time and effort in this
@@ -31,6 +34,13 @@ export default async function Home() {
           </p>
         </div>
       </div>
+      <button
+        className="btn btn-block btn-primary dark:btn-error mt-4 transition-colors duration-700"
+        type="button"
+        onClick={() => router.push("/dashboard")}
+      >
+        Dashboard!
+      </button>
     </div>
   );
 }
