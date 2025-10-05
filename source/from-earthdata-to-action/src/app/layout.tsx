@@ -29,7 +29,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="min-h-screen bg-gradient-to-t from-indigo-500 to-cyan-300 dark:from-gray-900 dark:to-slate-800 relative transition-colors duration-700">
+        <div className="fixed top-0 left-0 w-[200%] h-full flex -z-10">
+          <div className="w-1/2 h-full bg-[url('../../public/background_images/morning_sky.png')] dark:bg-[url('../../public/background_images/night_sky.png')] bg-no-repeat bg-auto bg-top animate-scroll-left transition-colors duration-700"></div>
+          <div className="w-1/2 h-full bg-[url('../../public/background_images/morning_sky.png')] dark:bg-[url('../../public/background_images/night_sky.png')] bg-no-repeat bg-auto bg-top animate-scroll-left transition-colors duration-700"></div>
+        </div>
+        <div>
           <div className="absolute top-4 right-4 flex flex-col items-end">
             <DarkModeToggle />
           </div>
