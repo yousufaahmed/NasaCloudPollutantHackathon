@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { MapContainer, Marker, TileLayer } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import "leaflet.heat";
 import "leaflet/dist/leaflet.css";
@@ -18,7 +18,7 @@ L.Icon.Default.mergeOptions({
 });
 
 import { useMap } from "react-leaflet/hooks";
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 function HeatLayer({
   addressPoints,
@@ -54,9 +54,46 @@ function HeatLayer({
     return () => {
       map.removeLayer(heat);
     };
-  }, [map, addressPoints]); // Add dependencies
+  }, [map, addressPoints]);
 
   return null;
+}
+
+function DraggableMarker({
+  initialPosition,
+}: {
+  initialPosition: [number, number];
+}) {
+  const [position, setPosition] = useState(initialPosition);
+  const markerRef = useRef<L.Marker>(null);
+
+  const eventHandlers = useMemo(
+    () => ({
+      dragend() {
+        const marker = markerRef.current;
+        if (marker != null) {
+          const newPosition = marker.getLatLng();
+          setPosition([newPosition.lat, newPosition.lng]);
+        }
+      },
+    }),
+    []
+  );
+
+  useEffect(() => {
+    console.log("Marker position changed:", position);
+  }, [position]);
+
+  return (
+    <Marker
+      draggable={true}
+      eventHandlers={eventHandlers}
+      position={position}
+      ref={markerRef}
+    >
+      <Popup>You can drag this marker.</Popup>
+    </Marker>
+  );
 }
 
 function StartView({
@@ -78,7 +115,6 @@ function StartView({
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function Map(props: any) {
   const { position, zoom, showHeatmap, heatMapData } = props;
-
   return (
     <div className="h-[500px] w-full">
       <MapContainer
@@ -92,7 +128,7 @@ export default function Map(props: any) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Marker position={position}></Marker>
+        <DraggableMarker initialPosition={position} />
         <StartView position={position} zoom={zoom} />
         {showHeatmap && <HeatLayer addressPoints={heatMapData} />}
       </MapContainer>
