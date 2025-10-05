@@ -5,8 +5,6 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  // Remove rewrites - they won't work in static export
-  // Azure SWA will handle API routing differently
   trailingSlash: true,
   async redirects() {
     return [
@@ -16,6 +14,10 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
     ];
+  },
+  // Add environment variable for API URL
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000',
   },
 };
 
