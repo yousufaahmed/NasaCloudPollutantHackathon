@@ -2,7 +2,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 from contextlib import asynccontextmanager
-import xgboost as xgb
+from pathlib import Path
+import pickle
 import numpy as np
 from typing import List
 import logging
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 # Global variable for model
 model = None
-EXPECTED_FEATURES = 11  # Update this based on your feature count
+EXPECTED_FEATURES = 11  # Sri might have to confirm but i think this is right
 
 
 
@@ -25,9 +26,9 @@ async def lifespan(app: FastAPI):
     # Startup: Load model
     global model
     try:
-        model = xgb.XGBRegressor()
-        model.load_model("xgb_model.json")
-        logger.info("Model loaded successfully")
+        with open("airnowModels/aqi_model.pkl", "rb") as f:
+            model = pickle.load(f)
+        logger.info("Model loaded successfully from pickle file")
     except Exception as e:
         logger.error(f"Failed to load model: {str(e)}")
         raise RuntimeError(f"Could not load model: {str(e)}")
