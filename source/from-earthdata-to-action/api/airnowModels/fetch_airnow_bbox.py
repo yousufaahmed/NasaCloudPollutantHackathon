@@ -3,6 +3,8 @@ from datetime import datetime, timedelta, timezone
 import requests
 import pandas as pd
 from pathlib import Path
+import geopandas as gpd
+from shapely.geometry import Point
 
 from bbox_utils import bbox_from_center_miles, bbox_to_string
 
@@ -16,7 +18,8 @@ def get_two_hour_window_utc():
     now = datetime.now(timezone.utc)
     # Use the most recently COMPLETED hour to avoid partial-hour gaps
     end_hour = now.replace(minute=0, second=0, microsecond=0) - timedelta(hours=1)
-    start_hour = end_hour - timedelta(hours=1)
+    # Expand window to last 2 days (48 hours)
+    start_hour = end_hour - timedelta(hours=24)
     return start_hour, end_hour
 
 
@@ -113,6 +116,16 @@ def fetch_and_save(lat: float, lon: float, miles_to_edge: float = 10.0, out_dir:
         if len(df):
             break
 
+    # If still empty, fallback to CONUS bbox
+    if not len(df):
+        conus_bbox = "-130.964794,13.151361,-62.410107,50.455533"
+        frames = []
+        for p in POLLUTANTS:
+            f = fetch_pollutant(p, conus_bbox, start_hour, end_hour)
+            if not f.empty:
+                frames.append(f)
+        df = _merge_frames_on_utc(frames)
+
     if out_dir is None:
         out_dir = Path(__file__).resolve().parent / "user_output"
     else:
@@ -129,12 +142,87 @@ def fetch_and_save(lat: float, lon: float, miles_to_edge: float = 10.0, out_dir:
     if "UTC" in df.columns:
         df = df.drop_duplicates(subset=["UTC"]).sort_values("UTC")
 
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    out_path = out_dir / f"airnow_bbox_{timestamp}.xlsx"
-    # Format UTC for Excel readability
+    # Add State column based on the center coordinate
+    try:
+        states_url = "https://www2.census.gov/geo/tiger/GENZ2018/shp/cb_2018_us_state_20m.zip"
+        us_states = gpd.read_file(states_url).to_crs(epsg=4326)
+        us_states = us_states[~us_states['STUSPS'].isin(['PR','GU','VI','AS','MP'])]
+        pt = gpd.GeoSeries([Point(lon, lat)], crs="EPSG:4326")
+        match = gpd.sjoin(gpd.GeoDataFrame(geometry=pt), us_states[['NAME','geometry']], how='left', predicate='within')
+        state_name = match['NAME'].iloc[0] if len(match) else None
+        if state_name is None or pd.isna(state_name):
+            state_name = "Unknown"
+        df["State"] = state_name
+    except Exception:
+        df["State"] = "Unknown"
+
+    # Feature engineering similar to notebook examples
+    # Ensure UTC is datetime for feature engineering
     if "UTC" in df.columns:
-        df["UTC"] = pd.to_datetime(df["UTC"], utc=True, errors="coerce").dt.strftime("%Y-%m-%dT%H:%M")
-    df.to_excel(out_path, index=False)
+        df["UTC"] = pd.to_datetime(df["UTC"], utc=True, errors="coerce")
+
+    # Derive calendar features
+    if "UTC" in df.columns:
+        df["Year"] = df["UTC"].dt.year
+        df["Month"] = df["UTC"].dt.month
+        df["Day"] = df["UTC"].dt.day
+        df["Hour"] = df["UTC"].dt.hour
+
+    # Prepare lag/rolling features per State
+    target_cols = ["AQI", "Value_NO2", "Value_CO", "Value_OZONE", "Value_SO2"]
+    lags = [6, 24]
+    rolls = [3, 6, 12, 24]
+
+    def add_lag_features(group: pd.DataFrame) -> pd.DataFrame:
+        group = group.sort_values(["UTC"]).copy()
+        for col in target_cols:
+            if col not in group.columns:
+                continue
+            if col == "AQI":
+                group[f"{col}_lag6"] = group[col].shift(6)
+            else:
+                for lag in lags:
+                    group[f"{col}_lag{lag}"] = group[col].shift(lag)
+                for win in rolls:
+                    # Use min_periods=1 so values exist even if < win points available
+                    group[f"{col}_rollmean{win}"] = group[col].rolling(win, min_periods=1).mean()
+                    group[f"{col}_rollstd{win}"] = group[col].rolling(win, min_periods=1).std()
+        return group
+
+    if "State" in df.columns and "UTC" in df.columns:
+        df_feat = df.sort_values(["State", "UTC"]).groupby("State", group_keys=False).apply(add_lag_features, include_groups=False)
+        if "UTC" in df_feat.columns:
+            df_feat = df_feat[~df_feat["UTC"].isna()].reset_index(drop=True)
+    else:
+        # Fallback: no state available, compute globally
+        df_feat = add_lag_features(df)
+        if "UTC" in df_feat.columns:
+            df_feat = df_feat[~df_feat["UTC"].isna()].reset_index(drop=True)
+
+    # Fill NaNs with medians (after State is added and features generated)
+    if "State" in df_feat.columns:
+        df_feat["State"] = df_feat["State"].fillna("Unknown").astype(str)
+    # Compute median per numeric column and fill
+    numeric_cols = df_feat.select_dtypes(include=["number"]).columns
+    if len(numeric_cols):
+        for c in numeric_cols:
+            med = df_feat[c].median(skipna=True)
+            df_feat[c] = df_feat[c].fillna(med)
+
+    # Output path (transformed)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    out_path = out_dir / f"airnow_bbox_features_{timestamp}.xlsx"
+
+    # Keep only the most recent row by UTC
+    if "UTC" in df_feat.columns:
+        df_out = df_feat.sort_values("UTC").tail(1)
+    else:
+        df_out = df_feat.tail(1)
+
+    # Format UTC for Excel readability
+    if "UTC" in df_out.columns:
+        df_out["UTC"] = pd.to_datetime(df_out["UTC"], utc=True, errors="coerce").dt.strftime("%Y-%m-%dT%H:%M")
+    df_out.to_excel(out_path, index=False)
     return out_path
 
 
