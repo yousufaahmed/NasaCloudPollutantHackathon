@@ -23,6 +23,20 @@ jobs:
         with:
           node-version: 18
       
+      - name: Verify Next.js config
+        working-directory: source/from-earthdata-to-action
+        run: |
+          echo "=== next.config.ts content ==="
+          cat next.config.ts
+          echo ""
+          echo "=== Checking for 'output' in config ==="
+          if grep -q "output.*export" next.config.ts; then
+            echo "✓ Config has output: 'export'"
+          else
+            echo "✗ Config does NOT have output: 'export'"
+            exit 1
+          fi
+      
       - name: Install and Build
         working-directory: source/from-earthdata-to-action
         env:
@@ -30,6 +44,19 @@ jobs:
         run: |
           npm ci
           npm run build
+      
+      - name: Debug - Check build output
+        run: |
+          echo "=== Contents of source/from-earthdata-to-action ==="
+          ls -la source/from-earthdata-to-action/
+          echo ""
+          if [ -d "source/from-earthdata-to-action/out" ]; then
+            echo "✓ OUT FOLDER EXISTS!"
+            ls -la source/from-earthdata-to-action/out/
+          else
+            echo "✗ OUT FOLDER DOES NOT EXIST"
+            echo "Build may have failed or config not applied"
+          fi
       
       - name: Build And Deploy
         id: builddeploy
