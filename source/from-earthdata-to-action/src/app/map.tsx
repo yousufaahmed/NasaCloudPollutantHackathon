@@ -82,6 +82,13 @@ function DraggableMarker({
 
   useEffect(() => {
     console.log("Marker position changed:", position);
+    const coordinates = fetch(`endpoint`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ latitude: position[0], longitude: position[1] }),
+    });
   }, [position]);
 
   return (
