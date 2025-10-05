@@ -1,35 +1,52 @@
+# .github/workflows/azure-static-web-apps.yml
 name: Azure Static Web Apps CI/CD
+
 on:
   push:
     branches: [ main ]
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches: [ main ]
+
 jobs:
   build_and_deploy:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
+
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - name: Install and Build
+
+      # Build your Next.js app (static export is handled by next.config with output:'export')
+      - name: Build (Next)
         working-directory: source/from-earthdata-to-action
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
         run: |
           npm ci
           npm run build
+
+      # Sanity check: ensure 'out/index.html' exists (fail early if not)
+      - name: Assert build output exists
+        run: |
+          ls -la source/from-earthdata-to-action/out || true
+          test -f source/from-earthdata-to-action/out/index.html
+
+      # Deploy already-built artifacts to Azure Static Web Apps
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          app_location: "/"
-          app_artifact_location: "source/from-earthdata-to-action/out"
+          app_location: source/from-earthdata-to-action
+          output_location: out
+          api_location: ""
           skip_app_build: true
+          deployment_environment: Production
+
   close_pull_request:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
