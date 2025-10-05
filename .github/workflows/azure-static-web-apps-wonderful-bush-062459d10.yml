@@ -37,7 +37,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "source/from-earthdata-to-action"
-          api_location: ""
+          api_location: "api"
           output_location: "out"
           skip_app_build: true
           
