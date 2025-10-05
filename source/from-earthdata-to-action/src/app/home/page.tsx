@@ -28,8 +28,8 @@ export default function Home() {
           />
           <p className="px-4 text-black dark:text-white transition-colors duration-700">
             This is our team, consisting of a bunch of students from the
-            University of the Exeter. We worked really hard on this throughout
-            the night and we hope you appreciate our time and effort in this
+            University of Exeter. We worked really hard on this throughout the
+            night and we hope you appreciate our time and effort in this
             submission!
           </p>
         </div>
