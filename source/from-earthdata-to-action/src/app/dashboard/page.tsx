@@ -2,6 +2,7 @@
 import dynamic from "next/dynamic";
 import { useGeolocation } from "@uidotdev/usehooks";
 import { useState, useEffect } from "react";
+import WeatherWidget from "../weatherwidget";
 
 const Map = dynamic(() => import("../map"), {
   loading: () => <p>A map is loading</p>,
@@ -79,15 +80,24 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto px-[15%] py-6">
-      {loading && <p>Loading... (Please enable permissions)</p>}
+      {loading && (
+        <p className="text-center text-black dark:text-amber-600">
+          Loading... (Please enable permissions)
+        </p>
+      )}
       {maperror && <p>Failed to get your location</p>}
       {!loading && !maperror && (
-        <Map
-          position={position}
-          zoom={zoom}
-          heatMapData={filteredpoints}
-          showHeatmap={showAirHeatmap}
-        />
+        <div className="flex flex-col gap-6 lg:flex-row-reverse">
+          <div className=" ">
+            <WeatherWidget latitude={position[0]} longitude={position[1]} />
+          </div>
+          <Map
+            position={position}
+            zoom={zoom}
+            heatMapData={filteredpoints}
+            showHeatmap={showAirHeatmap}
+          />
+        </div>
       )}
 
       <div className="py-4 justify-center flex">
@@ -109,14 +119,6 @@ export default function Dashboard() {
             onChange={() => setShowAirHeatmap((v) => !v)}
           />
           Show Air Quality
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={showPopHeatmap}
-            onChange={() => setShowPopHeatmap((v) => !v)}
-          />
-          Show Population Density
         </label>
       </div>
     </div>
